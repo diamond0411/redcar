@@ -2,18 +2,30 @@ import React, { useState, useRef, useLayoutEffect } from 'react';
 import Head from 'next/head';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import * as linkify from 'linkifyjs';
 
 export default function QuestionBox() {
   const [question, setQuestion] = useState('');
   const [response, setResponse] = useState('');
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isScrolling, setIsScrolling] = useState(false);
   const responseContainerRef = useRef<HTMLDivElement>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim()) return;
     setResponse('');
+    setError('');
     setIsLoading(true)
+    setIsScrolling(false)
+    const links = linkify.find(question)
+    const domain = links.find(link=>link.type === "url")?.value || null
+    if (domain == null) {
+        setError('Please include the company\'s url in the question');
+        setIsLoading(false)
+        return
+    }
     try {
       const stream = await fetch("http://localhost:3001/llmquery/stream", {
         method: 'POST',
@@ -28,9 +40,10 @@ export default function QuestionBox() {
           domain: "redcar.io"
         }),
       })
-
+      //console.log(isLoading)
       if (stream.body != null) {
         setIsLoading(false)
+        setIsScrolling(true)
         const reader = stream.body
           .pipeThrough(new TextDecoderStream())
           .getReader();
@@ -57,10 +70,12 @@ export default function QuestionBox() {
             }
           }
         }
+        setIsScrolling(false)
       }
     } catch (error) {
       console.error('Streaming setup error:', error);
       setIsLoading(false);
+      setIsScrolling(false)
       setResponse('An error occurred while setting up the stream.');
     }
   };
@@ -85,14 +100,14 @@ export default function QuestionBox() {
             onChange={(e) => setQuestion(e.target.value)}
             placeholder="Ask your question..."
             className="w-full text-black"
-            disabled={isLoading}
+            disabled={isLoading || isScrolling}
           />
           <Button 
             type="submit" 
             className="w-full" 
-            disabled={isLoading || !question.trim()}
+            disabled={isLoading || !question.trim() || isScrolling}
           >
-            {isLoading ? 'Streaming...' : 'Submit'}
+            {isLoading || isScrolling ? 'Streaming...' : 'Submit'}
           </Button>
         </form>
 
@@ -103,6 +118,11 @@ export default function QuestionBox() {
           >
             {isLoading && (
               <div className="text-gray-500 animate-pulse">Waiting for response...</div>
+            )}
+            {error && (
+                <div className="text-red-500 animate-pulse">
+                    {error}
+                </div>
             )}
             {response}
           </div>
