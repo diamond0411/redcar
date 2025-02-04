@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { LLMQueryServiceInterface } from "../interfaces/llmquery.interface";
 import { ChatOpenAI } from "@langchain/openai";
-import { ChatPromptTemplate } from "@langchain/core/prompts"
+import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts"
 import { Observable } from "rxjs";
 import { WebBrowser } from 'langchain/tools/webbrowser';
 import { OpenAIEmbeddings } from '@langchain/openai';
@@ -13,9 +13,8 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 @Injectable()
 export class LLMQueryService implements LLMQueryServiceInterface {
     private llm: ChatOpenAI;
-    private prompt: ChatPromptTemplate;
     private webBrowser: WebBrowser;
-
+    private prompt: ChatPromptTemplate;
     constructor() {
         this.llm = new ChatOpenAI({
             model: process.env.MODEL,
@@ -23,11 +22,10 @@ export class LLMQueryService implements LLMQueryServiceInterface {
             openAIApiKey: process.env.OPENAI_API_KEY,
             streaming: true
         });
-
         this.prompt = ChatPromptTemplate.fromMessages([
             ["system", 
-                "You are a helpful assistant that explains companies based off of their website and your background knowledge. Do not hallucinate any information about the company. Here is the company website:\n {context}"],
-            ["human", "{input}"],
+                "You are a helpful assistant that explains companies based off of their website and your background knowledge. Do not hallucinate any information about the company. Here is an answer to the question {question} you gave from the data on the company website: {result}"],
+            ["human", "Polish this answer such that if you do not know the answer or it's possible to find on external sources, mention that the information is not on the website and the sources where they could find this information"],
         ]);
 
         this.webBrowser = new WebBrowser({
@@ -37,41 +35,25 @@ export class LLMQueryService implements LLMQueryServiceInterface {
     }
 
     streamLLMResponse(prompt: string, domain: string): Observable<MessageEvent> {
+        if (!prompt || !domain) {
+            throw new Error('Prompt and domain must be provided');
+        }
         return new Observable((subscriber) => {
             const runStream = async () => {
                 try {
                     const url = domain.startsWith('http') ? domain : `https://${domain}`;
-                    const result = await this.webBrowser.invoke({url});
-                    const splitter = new RecursiveCharacterTextSplitter({
-                        chunkSize: 1000,
-                        chunkOverlap: 200,
-                    });
-                    
-                    const docs = await splitter.createDocuments([result]);
-                    const vectorStore = await MemoryVectorStore.fromDocuments(
-                        docs,
-                        new OpenAIEmbeddings()
-                    );
-                    const documentChain = await createStuffDocumentsChain({
-                        llm: this.llm,
-                        prompt: this.prompt,
-                    });
-                    const retrievalChain = await createRetrievalChain({
-                        combineDocsChain: documentChain,
-                        retriever: vectorStore.asRetriever(),
-                    });
-                    const stream = await retrievalChain.stream({
-                        input: prompt,
-                        context: result  
-                    });
+                    const result = await this.webBrowser.invoke(`${url}, ${prompt}`);
+                    const chain = this.prompt.pipe(this.llm)
+                    const stream = await chain.stream({result: result, question: prompt});
                     for await (const chunk of stream) {
                         subscriber.next({
-                            data: chunk.answer, 
+                            data: chunk.content, 
                             type: 'message',
                         } as MessageEvent);
                     }
                     subscriber.complete();
                 } catch (error) {
+                    console.log(error)
                     subscriber.error(error);
                 }
             };
