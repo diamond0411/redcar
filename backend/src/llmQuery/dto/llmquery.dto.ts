@@ -1,7 +1,7 @@
 import { IsString} from 'class-validator';
 import { MessageContent } from '@langchain/core/messages';
 
-export class QueryDTO {
+export class LLMQueryDTO {
     @IsString()
     prompt: string;
     
@@ -9,7 +9,7 @@ export class QueryDTO {
     domain: string;
 }
 
-export class ResponseDTO {
+export class LLMResponseDTO {
     @IsString()
     response: MessageContent;
 }
