@@ -25,7 +25,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
         this.prompt = ChatPromptTemplate.fromMessages([
             ["system", 
                 "You are a helpful assistant that explains companies based off of their website and your background knowledge. Do not hallucinate any information about the company. Here is an answer to the question {question} you gave from the data on the company website: {result}"],
-            ["human", "Polish this answer such that if you do not know the answer or it's possible to find on external sources, mention that the information is not on the website and the sources where they could find this information"],
+            ["human", "Polish this answer such that if you do not know the answer or it's possible to find on external sources, mention that the information is not on the website and the sources where they could find this information. Do not mention text and only talk in terms of the website. Format acronyms such as B2B as one token and format the website url like redcar.io to be in one token."],
         ]);
 
         this.webBrowser = new WebBrowser({
