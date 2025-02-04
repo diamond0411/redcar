@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { LLMQueryServiceInterface } from "../interfaces/llmquery.interface";
 import { ChatOpenAI } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts"
-
+import { Observable } from "rxjs";
 
 @Injectable()
 export class LLMQueryService implements LLMQueryServiceInterface {
@@ -19,7 +19,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
             ["human", "{input}"],
         ])
     }
-    streamLLMResponse(prompt: string, domain: string): MessageEvent {
+    streamLLMResponse(prompt: string, domain: string): Observable<MessageEvent> {
         
     }
 }
