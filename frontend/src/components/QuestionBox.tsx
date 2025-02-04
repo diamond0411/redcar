@@ -37,7 +37,7 @@ export default function QuestionBox() {
         },
         body: JSON.stringify({
           prompt: question,
-          domain: "redcar.io"
+          domain: domain
         }),
       })
       //console.log(isLoading)
@@ -107,7 +107,7 @@ export default function QuestionBox() {
             className="w-full" 
             disabled={isLoading || !question.trim() || isScrolling}
           >
-            {isLoading || isScrolling ? 'Streaming...' : 'Submit'}
+            {isLoading || isScrolling ? 'Loading' : 'Submit'}
           </Button>
         </form>
 
@@ -116,16 +116,16 @@ export default function QuestionBox() {
             ref={responseContainerRef}
             className="p-6 bg-gray-50 max-h-[300px] overflow-y-auto text-sm text-black"
           >
-            {isLoading && (
-              <div className="text-gray-500 animate-pulse">Waiting for response...</div>
-            )}
-            {error && (
-                <div className="text-red-500 animate-pulse">
-                    {error}
-                </div>
-            )}
             {response}
           </div>
+        )}
+        {isLoading && (
+            <div className="text-gray-500 animate-pulse text-center">Waiting for response...</div>
+        )}
+        {error && (
+            <div className="text-red-500 animate-pulse text-center">
+                {error}
+            </div>
         )}
       </div>
     </div>
