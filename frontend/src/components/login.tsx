@@ -27,7 +27,6 @@ const LoginSignUp: React.FC<LoginSignUpProps> = ({ onLogin }) => {
       });
 
       const data = await response.json();
-      console.log(data.token)
       if (response.ok) {
         onLogin(data.token);
         setIsLogin(true);

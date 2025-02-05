@@ -14,7 +14,7 @@ export class HistoryService {
   }
 
   async findOne(id: string) {
-    const history= await this.historyModel.find({ userID: id });
+    const history= await this.historyModel.find({ userID: id }).sort({_id:1});
     if (history) {
       return history;
     }
