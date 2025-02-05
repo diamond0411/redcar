@@ -17,6 +17,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
     private webBrowser: WebBrowser;
     private prompt: ChatPromptTemplate;
     private historyService: HistoryService;
+    private summaryPrompt: ChatPromptTemplate;
 
     constructor(@InjectModel(History.name) private historyModel: Model<History>) {
         this.llm = new ChatOpenAI({
@@ -28,9 +29,12 @@ export class LLMQueryService implements LLMQueryServiceInterface {
         this.prompt = ChatPromptTemplate.fromMessages([
             ["system", 
                 "You are a helpful assistant that explains companies based off of their website and your background knowledge. Do not hallucinate any information about the company. Here is an answer to the question {question} you gave from the data on the company website: {result}"],
-            ["human", "Polish this answer such that if you do not know the answer or it's possible to find on external sources, mention that the information is not on the website and the sources where they could find this information. Do not mention text and only talk in terms of the website. Format acronyms such as B2B as one token and format the website url like redcar.io to be in one token."],
+            ["human", "Polish this answer such that if you do not know the answer, mention that the information is not on the website. Do not add the links. Do not mention text and only talk in terms of the website."],
         ]);
-
+        this.summaryPrompt = ChatPromptTemplate.fromMessages([
+            ["system", 
+                "Do not hallucinate. You are a helpful assistant that answers question about a company. Summarize the following response in 2-3 concise sentences: {answer}"],
+        ]);
         this.webBrowser = new WebBrowser({
             model: this.llm,
             embeddings: new OpenAIEmbeddings(),
@@ -48,7 +52,8 @@ export class LLMQueryService implements LLMQueryServiceInterface {
                     const url = domain.startsWith('http') ? domain : `https://${domain}`;
                     const result = await this.webBrowser.invoke(`${url}, ${prompt}`);
                     const chain = this.prompt.pipe(this.llm)
-                    const stream = await chain.stream({result: result, question: prompt});
+                    const answer = await chain.invoke({result: result, question: prompt})
+                    const stream = await this.summaryPrompt.pipe(this.llm).stream({answer: answer});
                     let entireMessage = '';
                     for await (const chunk of stream) {
                         subscriber.next({

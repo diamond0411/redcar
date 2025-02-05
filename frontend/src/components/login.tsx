@@ -39,18 +39,18 @@ const LoginSignUp: React.FC<LoginSignUpProps> = ({ onLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
-      <div className="w-full max-w-md bg-white shadow-md rounded-lg overflow-hidden p-6 space-y-4">
-        <h2 className="text-2xl font-bold text-center">
+    <div className="flex flex-col items-center justify-center bg-gray-800 p-4">
+      <div className="w-full max-w-md bg-white shadow-md rounded-lg overflow-hidden p-10 space-y-4">
+        <h2 className="text-2xl font-bold text-center text-black">
           {isLogin ? 'Login' : 'Sign Up'}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 focus:border-indigo-600 focus:outline-hidden">
           <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full text-black"
+            className="border-solid w-full text-black bg-gray-300"
             required
           />
           <Input
@@ -58,7 +58,7 @@ const LoginSignUp: React.FC<LoginSignUpProps> = ({ onLogin }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="w-full text-black"
+            className="border-solid w-full text-black bg-gray-300"
             required
           />
           <Button type="submit" className="w-full">
@@ -71,7 +71,7 @@ const LoginSignUp: React.FC<LoginSignUpProps> = ({ onLogin }) => {
         <Button
           variant="link"
           onClick={() => setIsLogin(!isLogin)}
-          className="w-full text-center"
+          className="w-full text-center text-blue-400"
         >
           {isLogin ? 'Need an account? Sign Up' : 'Already have an account? Login'}
         </Button>
