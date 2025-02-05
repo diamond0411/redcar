@@ -18,25 +18,23 @@ export class AuthService {
 
   async signUp(signupDto: SignupDto) {
     const {email, password } = signupDto;
-
+    
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.userModel.create({
       email,
       password: hashedPassword,
     });
-
     await user.save();
-
     const token = await this.jwtService.sign(
       { id: user.id },
       {
         secret: this.configService.get('JWT_SECRET'),
         expiresIn: this.configService.get('JWT_EXPIRES'),
       },
-    );
-
+    )
     return { token };
+
   }
 
   async login(loginDto: LoginDto) {

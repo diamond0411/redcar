@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as linkify from 'linkifyjs';
+import LoginSignUp from '@/components/login';
 
 export default function Home() {
   const [question, setQuestion] = useState('');
@@ -19,71 +20,86 @@ export default function Home() {
       setToken(storedToken);
     }
   }, []);
-  
+
+  const handleLogin = (token: string) => {
+    localStorage.setItem('token', token);
+    setToken(token);
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    setToken(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!question.trim()) return;
     setResponse('');
     setError('');
-    setIsLoading(true)
-    setIsScrolling(false)
-    const links = linkify.find(question)
-    const domain = links.find(link=>link.type === "url")?.value || null
+    setIsLoading(true);
+    setIsScrolling(false);
+    const links = linkify.find(question);
+    const domain = links.find((link) => link.type === 'url')?.value || null;
     if (domain == null) {
-        setError('Please include the company\'s url in the question');
-        setIsLoading(false)
-        return
+      setError("Please include the company's url in the question");
+      setIsLoading(false);
+      return;
     }
     try {
-      const stream = await fetch(process.env.LLMQUERY_URL+"/llmquery/stream", {
+      console.log(process.env.NEXT_PUBLIC_BACKEND_URL);
+      const stream = await fetch(process.env.NEXT_PUBLIC_BACKEND_URL + '/llmquery/stream', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Cache-Control': 'no-cache',
-          'Connection':  'keep-alive',
-          'Accept': 'text/event-stream',
-          'Authorization': `Bearer ${token}` 
+          Connection: 'keep-alive',
+          Accept: 'text/event-stream',
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           prompt: question,
-          domain: domain
+          domain: domain,
         }),
-      })
+      });
       if (stream.body != null) {
-        setIsLoading(false)
-        setIsScrolling(true)
-        const reader = stream.body
-          .pipeThrough(new TextDecoderStream())
-          .getReader();
-        
+        setIsLoading(false);
+        setIsScrolling(true);
+        const reader = stream.body.pipeThrough(new TextDecoderStream()).getReader();
+
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
           const lines = value.split('\n');
           for (const line of lines) {
             if (line.startsWith('data:')) {
-              const data = line.replace(/^data:\s*/, '').trim();
+              const data = line.replace(/^data:\s/, '');
+              
               console.log('Received:', data);
               setResponse((prev) => {
                 if (prev.length === 0) return data;
+                /*
                 const punctuationMarks = ['.', ',', '!', '?', ';', ':', ')', ']', '}'];
                 const lastChar = prev[prev.length - 1];
                 const firstChar = data[0];
                 let formattedData = data;
-                if ((punctuationMarks.includes(lastChar) && firstChar !== ' ') || (!punctuationMarks.includes(firstChar) && lastChar !== ' ')) {
+                if (
+                  (punctuationMarks.includes(lastChar) && firstChar !== ' ') ||
+                  (!punctuationMarks.includes(firstChar) && lastChar !== ' ')
+                ) {
                   formattedData = ' ' + data;
                 }
-                return prev + formattedData;
+                */
+                return prev + data;
               });
             }
           }
         }
-        setIsScrolling(false)
+        setIsScrolling(false);
       }
     } catch (error) {
       console.error('Streaming setup error:', error);
       setIsLoading(false);
-      setIsScrolling(false)
+      setIsScrolling(false);
       setResponse('An error occurred while setting up the stream.');
     }
   };
@@ -94,6 +110,10 @@ export default function Home() {
     }
   }, [response]);
 
+  if (!token) {
+    return <LoginSignUp onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-4">
       <Head>
@@ -101,8 +121,18 @@ export default function Home() {
       </Head>
 
       <div className="w-full max-w-xl bg-white shadow-md rounded-lg overflow-hidden">
+        <div className="p-6 flex justify-end">
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            className="text-sm text-red-600 hover:bg-red-50"
+          >
+            Sign Out
+          </Button>
+        </div>
+
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <Input 
+          <Input
             type="text"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
@@ -110,17 +140,17 @@ export default function Home() {
             className="w-full text-black"
             disabled={isLoading || isScrolling}
           />
-          <Button 
-            type="submit" 
-            className="w-full" 
+          <Button
+            type="submit"
+            className="w-full"
             disabled={isLoading || !question.trim() || isScrolling}
           >
             {isLoading || isScrolling ? 'Loading' : 'Submit'}
           </Button>
         </form>
 
-        {(response) && (
-          <div 
+        {response && (
+          <div
             ref={responseContainerRef}
             className="p-6 bg-gray-50 max-h-[300px] overflow-y-auto text-sm text-black"
           >
@@ -128,13 +158,9 @@ export default function Home() {
           </div>
         )}
         {isLoading && (
-            <div className="text-gray-500 animate-pulse text-center">Waiting for response...</div>
+          <div className="text-gray-500 animate-pulse text-center">Waiting for response...</div>
         )}
-        {error && (
-            <div className="text-red-500 animate-pulse text-center">
-                {error}
-            </div>
-        )}
+        {error && <div className="text-red-500 animate-pulse text-center">{error}</div>}
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 import { Observable } from "rxjs";
 
 export interface LLMQueryServiceInterface { 
-    streamLLMResponse(prompt: string,  domain: string): Observable<MessageEvent>;
+    streamLLMResponse(prompt: string,  domain: string, userID: string): Observable<MessageEvent>;
 }

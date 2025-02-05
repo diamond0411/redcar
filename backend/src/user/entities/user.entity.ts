@@ -3,7 +3,7 @@ from '@nestjs/mongoose';
 @Schema()
 export class User {
     @Prop({ unique: true })
-    username: string;
+    email: string;
     @Prop()
     password: string;
 }

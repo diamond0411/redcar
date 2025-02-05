@@ -9,6 +9,7 @@ import { HistoryService } from "src/history/history.service";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { History } from "src/history/entities/history.entity";
+import { HistoryDTO } from "src/history/dto/history.dto";
 
 @Injectable()
 export class LLMQueryService implements LLMQueryServiceInterface {
@@ -37,7 +38,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
         this.historyService = new HistoryService(historyModel);
     }
 
-    streamLLMResponse(prompt: string, domain: string, userID?: string): Observable<MessageEvent> {
+    streamLLMResponse(prompt: string, domain: string, userID: string): Observable<MessageEvent> {
         if (!prompt || !domain) {
             throw new Error('Prompt and domain must be provided');
         }
@@ -56,6 +57,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
                         } as MessageEvent);
                         entireMessage += chunk.content;
                     }
+                    this.historyService.create(userID, new HistoryDTO(userID, prompt, entireMessage));
                     subscriber.complete();
                 } catch (error) {
                     console.log(error)
