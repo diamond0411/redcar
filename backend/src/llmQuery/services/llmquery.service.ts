@@ -5,13 +5,19 @@ import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts"
 import { Observable } from "rxjs";
 import { WebBrowser } from 'langchain/tools/webbrowser';
 import { OpenAIEmbeddings } from '@langchain/openai';
+import { HistoryService } from "src/history/history.service";
+import { InjectModel } from "@nestjs/mongoose";
+import { Model } from "mongoose";
+import { History } from "src/history/entities/history.entity";
 
 @Injectable()
 export class LLMQueryService implements LLMQueryServiceInterface {
     private llm: ChatOpenAI;
     private webBrowser: WebBrowser;
     private prompt: ChatPromptTemplate;
-    constructor() {
+    private historyService: HistoryService;
+
+    constructor(@InjectModel(History.name) private historyModel: Model<History>) {
         this.llm = new ChatOpenAI({
             model: process.env.MODEL,
             temperature: 0.7,
@@ -28,6 +34,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
             model: this.llm,
             embeddings: new OpenAIEmbeddings(),
         });
+        this.historyService = new HistoryService(historyModel);
     }
 
     streamLLMResponse(prompt: string, domain: string, userID?: string): Observable<MessageEvent> {
