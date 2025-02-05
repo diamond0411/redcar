@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User } from 'src/user/entities/user.entity';
+import { SignupDto } from './dto/signup.dto';
+import * as bcrypt from 'bcryptjs';
+import { LoginDto } from './dto/login.dto';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
+  constructor(
+    @InjectModel(User.name) private userModel: Model<User>,
+    private jwtService: JwtService,
+    private configService: ConfigService,
+  ) {}
+
+  async signUp(signupDto: SignupDto) {
+    const {email, password } = signupDto;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await this.userModel.create({
+      email,
+      password: hashedPassword,
+    });
+
+    await user.save();
+
+    const token = await this.jwtService.sign(
+      { id: user.id },
+      {
+        secret: this.configService.get('JWT_SECRET'),
+        expiresIn: this.configService.get('JWT_EXPIRES'),
+      },
+    );
+
+    return { token };
   }
 
-  findAll() {
-    return `This action returns all auth`;
-  }
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+    const user = await this.userModel.findOne({
+      email,
+    });
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
+    if (!user) throw new UnauthorizedException('invalid email or password');
 
-  update(id: number, updateAuthDto: UpdateAuthDto) {
-    return `This action updates a #${id} auth`;
-  }
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch)
+      throw new UnauthorizedException('invalid email or password');
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
+    const token = await this.jwtService.sign(
+      { id: user.id },
+      {
+        secret: this.configService.get('JWT_SECRET'),
+      },
+    );
+    return { token };
   }
 }

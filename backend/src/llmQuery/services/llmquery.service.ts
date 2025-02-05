@@ -5,10 +5,6 @@ import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts"
 import { Observable } from "rxjs";
 import { WebBrowser } from 'langchain/tools/webbrowser';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
-import { createRetrievalChain } from "langchain/chains/retrieval";
-import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 
 @Injectable()
 export class LLMQueryService implements LLMQueryServiceInterface {
@@ -34,7 +30,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
         });
     }
 
-    streamLLMResponse(prompt: string, domain: string): Observable<MessageEvent> {
+    streamLLMResponse(prompt: string, domain: string, userID?: string): Observable<MessageEvent> {
         if (!prompt || !domain) {
             throw new Error('Prompt and domain must be provided');
         }
@@ -45,11 +41,13 @@ export class LLMQueryService implements LLMQueryServiceInterface {
                     const result = await this.webBrowser.invoke(`${url}, ${prompt}`);
                     const chain = this.prompt.pipe(this.llm)
                     const stream = await chain.stream({result: result, question: prompt});
+                    let entireMessage = '';
                     for await (const chunk of stream) {
                         subscriber.next({
                             data: chunk.content, 
                             type: 'message',
                         } as MessageEvent);
+                        entireMessage += chunk.content;
                     }
                     subscriber.complete();
                 } catch (error) {

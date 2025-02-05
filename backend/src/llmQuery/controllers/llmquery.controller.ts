@@ -1,7 +1,8 @@
-import {Controller, Post, Body, Sse} from '@nestjs/common';
+import {Controller, Post, Body, Sse, UseGuards, Request} from '@nestjs/common';
 import {LLMQueryDTO, LLMResponseDTO} from '../dto/llmquery.dto'
 import { LLMQueryService } from '../services/llmquery.service';
 import { Observable } from 'rxjs';
+import { AuthGuard } from 'src/auth/auth.guard';
 
 @Controller("llmquery")
 export class LLMQueryController {
@@ -9,7 +10,8 @@ export class LLMQueryController {
 
     @Post('stream')
     @Sse('stream')
-    async stream(@Body() body: {prompt: string, domain: string}): Promise<Observable<MessageEvent>> {
-        return this.llmQueryService.streamLLMResponse(body.prompt, body.domain);
+    @UseGuards(AuthGuard)
+    async stream(@Request() req, @Body() body: {prompt: string, domain: string}): Promise<Observable<MessageEvent>> {
+        return this.llmQueryService.streamLLMResponse(body.prompt, body.domain, req.user ? req.user.id : null);
     }
 }
