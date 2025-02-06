@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import React, { useCallback, useState, useRef, useLayoutEffect, useEffect } from 'react';
 import Head from 'next/head';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -37,13 +37,9 @@ export default function Home() {
     setIsTokenResolved(true);
   }, []);
   
-  useEffect(() => {
-    if (token) {
-      fetchChatLogs();
-    }
-  }, [token]);
+  
 
-  const fetchChatLogs = async () => {
+  const fetchChatLogs = useCallback(async () => {
     try {
       const response = await fetch('/api/history', {
         method: 'GET',
@@ -70,12 +66,16 @@ export default function Home() {
       ]);
 
       setChatHistory(formattedLogs);
-    } catch (error) {
-      //console.error('Error fetching chat logs:', error);
+    } catch {
       setError('Failed to load chat history.');
     }
-  };
-
+  }, [token]);
+  
+  useEffect(() => {
+    if (token) {
+      fetchChatLogs();
+    }
+  }, [token, fetchChatLogs]);
   const handleLogin = (token: string) => {
     localStorage.setItem('token', token);
     setToken(token);

@@ -33,7 +33,7 @@ const LoginSignUp: React.FC<LoginSignUpProps> = ({ onLogin }) => {
       } else {
         setError(data.message || 'An error occurred');
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred');
     }
   };

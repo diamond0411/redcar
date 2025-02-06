@@ -29,11 +29,11 @@ export class LLMQueryService implements LLMQueryServiceInterface {
         this.prompt = ChatPromptTemplate.fromMessages([
             ["system", 
                 "You are a helpful assistant that explains companies based off of their website and your background knowledge. Do not hallucinate any information about the company. Here is an answer to the question {question} you gave from the data on the company website: {result}"],
-            ["human", "Polish this answer such that if you do not know the answer, mention that the information is not on the website. Do not add the links. Do not mention text and only talk in terms of the website."],
+            ["human", "Polish this answer such that if you do not know the answer to the direct question, mention that it is not on their website. Otherwise ignore any follow through information if it is not on the site. Do not add the links. Do not mention text and only talk in terms of the website."],
         ]);
         this.summaryPrompt = ChatPromptTemplate.fromMessages([
             ["system", 
-                "Do not hallucinate. You are a helpful assistant that answers question about a company. Summarize the following response in 2-3 concise sentences: {answer}"],
+                "Do not hallucinate. You are a helpful assistant that answers question about a company. Summarize the following response while ignoring sections you do not know about in 2-3 concise sentences. {answer}"],
         ]);
         this.webBrowser = new WebBrowser({
             model: this.llm,
@@ -53,10 +53,10 @@ export class LLMQueryService implements LLMQueryServiceInterface {
             const runStream = async () => {
                 try {
                     const url = domain.startsWith('http') ? domain : `https://${domain}`;
-                    const result = await this.webBrowser.invoke(`${url}, ${prompt}`);
+                    const result:string = await this.webBrowser.invoke(`${url}, ${prompt}`);
                     const chain = this.prompt.pipe(this.llm)
                     const answer = await chain.invoke({result: result, question: prompt})
-                    const stream = await this.summaryPrompt.pipe(this.llm).stream({answer: answer});
+                    const stream = await this.summaryPrompt.pipe(this.llm).stream({answer: answer.content});
                     let entireMessage = '';
                     for await (const chunk of stream) {
                         subscriber.next({
