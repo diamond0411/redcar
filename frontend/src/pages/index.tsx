@@ -72,7 +72,7 @@ export default function Home() {
 
       setChatHistory(formattedLogs);
     } catch (error) {
-      console.error('Error fetching chat logs:', error);
+      //console.error('Error fetching chat logs:', error);
       setError('Failed to load chat history.');
     }
   };
@@ -132,7 +132,7 @@ export default function Home() {
 
         while (true) {
           const { value, done } = await reader.read();
-          if (done) break;
+          if (!value || done) break;
           const lines = value.split('\n');
           for (const line of lines) {
             if (line.startsWith('data:')) {
