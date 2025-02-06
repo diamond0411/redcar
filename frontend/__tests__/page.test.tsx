@@ -2,8 +2,8 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import Home from '@/pages/index';
 import * as linkify from 'linkifyjs';
 import '@testing-library/jest-dom';
-import { ReadableStream } from 'stream/web';
 import { TextEncoder } from 'util';
+import { ReadableStream } from 'stream/web';
 
 jest.mock('@/components/login', () => ({
     __esModule: true,

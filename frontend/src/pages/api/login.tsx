@@ -1,3 +1,4 @@
+import { error } from 'console';
 import { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(
@@ -19,9 +20,12 @@ export default async function handler(
         body: JSON.stringify({ email, password }),
     })
     const data = await response.json();
+    if (!data.token) {
+      res.status(500).json({message: "Failed to login. Please check your email and password."})
+      return;
+    }
     res.status(200).json({ token: data.token });
   } catch (error) {
     console.error('Login error:', error);
-    res.status(500).json({ message: 'Internal server error' });
   }
 }

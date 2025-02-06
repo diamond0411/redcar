@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import * as linkify from 'linkifyjs';
 import LoginSignUp from '@/components/login';
 import { v4 } from "uuid";
-import { TextDecoderStream } from 'stream/web';
 
 interface Message {
   id: string;
@@ -221,7 +220,7 @@ export default function Home() {
             Sign Out
           </Button>
         </div>
-
+        {chatHistory.length > 0 && (
         <div
           ref={responseContainerRef}
           className="p-6 bg-gray-700 max-h-[500px] overflow-y-auto space-y-4"
@@ -248,7 +247,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-
+        )}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <Input
             type="text"

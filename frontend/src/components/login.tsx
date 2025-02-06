@@ -66,7 +66,7 @@ const LoginSignUp: React.FC<LoginSignUpProps> = ({ onLogin }) => {
           </Button>
         </form>
         {error && (
-          <div className="text-red-500 text-center">{error}</div>
+          <div className="text-red-500 text-center text-xs">{error}</div>
         )}
         <Button
           variant="link"
