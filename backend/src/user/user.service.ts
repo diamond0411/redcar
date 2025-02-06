@@ -12,11 +12,6 @@ export class UserService {
     return user.save();
   }
 
-  async findAll() {
-    const users = this.userModel.find();
-    return users;
-  }
-
   async findOne(id: number) {
     const user = await this.userModel.findOne({ where: { id: id } });
     if (user) {

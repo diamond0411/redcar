@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import * as linkify from 'linkifyjs';
 import LoginSignUp from '@/components/login';
 import { v4 } from "uuid";
+import { TextDecoderStream } from 'stream/web';
 
 interface Message {
   id: string;
@@ -210,7 +211,7 @@ export default function Home() {
       <div className="w-full max-w-4xl bg-gray-800 shadow-2xl rounded-lg overflow-hidden ">
         <div className="p-6 flex justify-between items-center">
           <div className="text-xl text-gray-100">
-            {"Ask a question about a company with their url"}
+            {"Company Info Asker"}
           </div>
           <Button
             onClick={handleSignOut}

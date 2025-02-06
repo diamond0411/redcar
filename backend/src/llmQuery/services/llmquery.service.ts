@@ -5,11 +5,11 @@ import { ChatPromptTemplate, PromptTemplate } from "@langchain/core/prompts"
 import { Observable } from "rxjs";
 import { WebBrowser } from 'langchain/tools/webbrowser';
 import { OpenAIEmbeddings } from '@langchain/openai';
-import { HistoryService } from "src/history/history.service";
+import { HistoryService } from "../../history/history.service";
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { History } from "src/history/entities/history.entity";
-import { HistoryDTO } from "src/history/dto/history.dto";
+import { History } from "../../history/entities/history.entity";
+import { HistoryDTO } from "../../history/dto/history.dto";
 
 @Injectable()
 export class LLMQueryService implements LLMQueryServiceInterface {
@@ -46,6 +46,9 @@ export class LLMQueryService implements LLMQueryServiceInterface {
         if (!prompt || !domain) {
             throw new Error('Prompt and domain must be provided');
         }
+        if (!userID) {
+            throw new Error('Invalid Authentication');
+        }
         return new Observable((subscriber) => {
             const runStream = async () => {
                 try {
@@ -57,12 +60,16 @@ export class LLMQueryService implements LLMQueryServiceInterface {
                     let entireMessage = '';
                     for await (const chunk of stream) {
                         subscriber.next({
-                            data: chunk.content, 
+                            data: chunk.content ? chunk.content : (chunk as Object)['stream'], 
                             type: 'message',
                         } as MessageEvent);
-                        entireMessage += chunk.content;
+                        entireMessage += chunk.content ? chunk.content : (chunk as Object)['stream'];
                     }
-                    this.historyService.create(userID, new HistoryDTO(userID, prompt, entireMessage));
+                    this.historyService.create(userID, {
+                        userID: userID,
+                        prompt: prompt,
+                        response: entireMessage,
+                    } as HistoryDTO);
                     subscriber.complete();
                 } catch (error) {
                     console.log(error)

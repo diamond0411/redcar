@@ -1,5 +1,4 @@
 import {Controller, Post, Body, Sse, UseGuards, Request} from '@nestjs/common';
-import {LLMQueryDTO, LLMResponseDTO} from '../dto/llmquery.dto'
 import { LLMQueryService } from '../services/llmquery.service';
 import { Observable } from 'rxjs';
 import { AuthGuard } from 'src/auth/auth.guard';
