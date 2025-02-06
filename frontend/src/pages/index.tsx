@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import * as linkify from 'linkifyjs';
 import LoginSignUp from '@/components/login';
+import { v4 } from "uuid";
 
 interface Message {
   id: string;
@@ -103,7 +104,7 @@ export default function Home() {
     }
     setChatHistory((prev) => [
       ...prev,
-      { id: `user-${Date.now()}`, text: question, sender: 'user' },
+      { id: `user-${v4()}`, text: question, sender: 'user' },
     ]);
 
     try {
@@ -146,7 +147,7 @@ export default function Home() {
                 } else {
                   return [
                     ...prev,
-                    { id: `assistant-${Date.now()}`, text: assistantMessage, sender: 'assistant' },
+                    { id: `assistant-${v4()}`, text: assistantMessage, sender: 'assistant' },
                   ];
                 }
               });
@@ -162,7 +163,7 @@ export default function Home() {
       setIsScrolling(false);
       setChatHistory((prev) => [
         ...prev,
-        { id: `error-${Date.now()}`, text: 'An error occurred while setting up the stream.', sender: 'assistant' },
+        { id: `error-${v4()}`, text: 'An error occurred while setting up the stream.', sender: 'assistant' },
       ]);
     }
   };
