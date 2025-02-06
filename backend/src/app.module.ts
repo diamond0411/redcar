@@ -8,14 +8,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { HistoryModule } from './history/history.module';
 
 const ENV = process.env.NODE_ENV;
-
 @Module({
   imports: [
     ConfigModule.forRoot({isGlobal: true, envFilePath: ENV ? '.env.dev' : `.env.${ENV}`}),
     LLMQueryModule, 
     UserModule, 
     AuthModule,
-    MongooseModule.forRoot(process.env.MONGO_URL+'/redcar'),
+    MongooseModule.forRoot(process.env.MONGO_URL as string, {user: process.env.MONGO_AUTH_USER, pass: process.env.MONGO_AUTH_PASS}),
     HistoryModule,
   ],
   controllers: [],

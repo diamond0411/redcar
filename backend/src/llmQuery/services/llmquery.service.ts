@@ -60,7 +60,7 @@ export class LLMQueryService implements LLMQueryServiceInterface {
                     let entireMessage = '';
                     for await (const chunk of stream) {
                         subscriber.next({
-                            data: chunk.content ? chunk.content : (chunk as Object)['stream'], 
+                            data: !(chunk.hasOwnProperty('stream')) ? chunk.content : (chunk as Object)['stream'], 
                             type: 'message',
                         } as MessageEvent);
                         entireMessage += chunk.content ? chunk.content : (chunk as Object)['stream'];
